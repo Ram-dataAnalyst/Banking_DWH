@@ -26,6 +26,18 @@ with engine.connect() as conn:
 
 
 with engine.connect() as conn:
+    # --- Step 0: Load Rejected transactions ---
+    stgdb_df = pd.read_sql(text("""select * from stgdb_banking_ram.stg_accounts where accountid is null or accountid =''"""), conn)
+        stgdb_df.to_sql(
+        "stg_accounts_reject",
+        con=engine,
+        schema=db,
+        if_exists="replace",
+        index=False
+    )
+    
+      
+    #step 1: Load stg_accounts to ods_accounts
     stgdb_df = pd.read_sql(text("SELECT * FROM stg_accounts where AccountID IS NOT NULL"), conn)
     #print(stgdb_df)
     odsdb_df=pd.DataFrame({
@@ -42,7 +54,7 @@ with engine.connect() as conn:
         "load_ts": datetime.now()                                     # CURRENT_TIMESTAMP
     })
 
-# --- Step 3: Insert into target table ---
+# --- Step 2: Insert into target table ---
     odsdb_df.to_sql(
         "ods_accounts",           # Target table name
         con=engine,
